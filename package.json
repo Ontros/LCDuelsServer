@@ -1,0 +1,21 @@
+{
+  "name": "lcduelsserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "onty",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "tsc": "^2.0.4",
+    "typescript": "^5.5.2",
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/ws": "^8.5.10"
+  }
+}

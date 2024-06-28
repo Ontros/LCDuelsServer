@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matchmaking Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #log {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+        }
+
+        #log p {
+            margin: 5px 0;
+        }
+
+        input {
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Matchmaking Client</h1>
+    <div>
+        <label for="steamId">Steam ID:</label>
+        <input type="text" id="steamId">
+        <label for="steamUsername">Username:</label>
+        <input type="text" id="steamUsername">
+        <button onclick="register()">Register</button>
+    </div>
+    <div>
+        <button onclick="sendReady()">Ready</button>
+        <button onclick="sendPosition()">Send Position</button>
+        <button onclick="sendScore()">Send Score</button>
+        <button onclick="leaveGame()">Leave Game</button>
+        <button onclick="death()">Died</button>
+        <button onclick="liftOff()">Liftoff</button>
+    </div>
+    <div id="log"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => log('Connected to server');
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            handleMessage(message);
+        };
+        ws.onclose = () => log('Disconnected from server');
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const p = document.createElement('p');
+            p.textContent = message;
+            logDiv.appendChild(p);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function handleMessage(message) {
+            switch (message.type) {
+                case 'match_found':
+                    log(`Match found! Opponent: ${message.opponentUsername} (ID: ${message.opponentId})`);
+                    break;
+                case 'game_start':
+                    log('Game started!');
+                    break;
+                case 'position':
+                    log(`Opponent position: ${message.value}`);
+                    break;
+                case 'score':
+                    log(`Opponent score: ${message.value}`);
+                    break;
+                case 'opponent_left':
+                    log('Your opponent has left the game.');
+                    break;
+                default:
+                    log(`Unknown message type: ${message.type}`);
+            }
+        }
+
+        function register() {
+            const steamId = document.getElementById('steamId').value;
+            const steamUsername = document.getElementById('steamUsername').value;
+            if (steamId && steamUsername) {
+                ws.send(JSON.stringify({ type: 'register', steamId, steamUsername }));
+                log(`Registered with Steam ID: ${steamId}, Username: ${steamUsername}`);
+            } else {
+                log('Please enter both Steam ID and Username');
+            }
+        }
+
+        function death() {
+            ws.send(JSON.stringify({ type: 'death' }));
+            log('Sent death');
+        }
+        function liftOff() {
+            ws.send(JSON.stringify({ type: 'liftoff' }));
+            log('Sent liftoff');
+        }
+
+        function sendReady() {
+            ws.send(JSON.stringify({ type: 'ready' }));
+            log('Sent ready');
+        }
+
+        function sendPosition() {
+            const position = prompt('Enter position byte:');
+            ws.send(JSON.stringify({ type: 'position', value: position }));
+            log(`Sent position: ${position}`);
+        }
+
+        function sendScore() {
+            const score = prompt('Enter score amount:');
+            ws.send(JSON.stringify({ type: 'score', value: score }));
+            log(`Sent score: ${score}`);
+        }
+
+        function leaveGame() {
+            ws.send(JSON.stringify({ type: 'leave' }));
+            log('Left game');
+        }
+    </script>
+</body>
+
+</html>
