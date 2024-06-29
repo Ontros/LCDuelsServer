@@ -47,7 +47,7 @@
     <div id="log"></div>
 
     <script>
-        const ws = new WebSocket('ws://localhost:8080');
+        const ws = new WebSocket('ws://130.61.35.90:8080');
 
         ws.onopen = () => log('Connected to server');
         ws.onmessage = (event) => {
