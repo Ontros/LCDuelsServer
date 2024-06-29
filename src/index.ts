@@ -97,30 +97,20 @@ wss.on('connection', (ws: WebSocket) => {
             case 'score':
                 if (player && player.opponent) {
                     player.score = data.value;
-                    if (player.opponent.waitingForResult && player.score >= player.opponent.score) {
-                        if (player.dead) {
+                    player.opponent.socket.send(JSON.stringify({ type: 'score', value: player.score }));
+                    //End waiting
+                    if (player.opponent.waitingForResult) {
+                        if (player.dead && player.score >= player.opponent.score) {
                             player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                             player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                            gameEnd(player);
                         }
-                        else {
-                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
-                            player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                        else if (!player.dead && player.score > player.opponent.score) {
+                            player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                            gameEnd(player);
                         }
-                        gameEnd(player);
                     }
-                    player.opponent.socket.send(JSON.stringify({ type: 'score', value: player.score }));
-                    // else if (player.score > player.opponent.score) {
-                    //     player.opponent.socket.send(JSON.stringify({ type: 'score', value: 1 }));
-                    //     player.socket.send(JSON.stringify({ type: 'score', value: 2 }));
-                    // }
-                    // else if (player.score < player.opponent.score) {
-                    //     player.opponent.socket.send(JSON.stringify({ type: 'score', value: 2 }));
-                    //     player.socket.send(JSON.stringify({ type: 'score', value: 1 }));
-                    // }
-                    // else {
-                    //     player.opponent.socket.send(JSON.stringify({ type: 'score', value: 0 }));
-                    //     player.socket.send(JSON.stringify({ type: 'score', value: 0 }));
-                    // }
                 }
                 break;
             case 'death':
