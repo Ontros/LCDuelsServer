@@ -67,9 +67,14 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false };
-                queue.push(player);
-                matchPlayers();
+                if (player.opponent) {
+                    player.socket.send(JSON.stringify({ type: "in_game_error" }));
+                }
+                else {
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false };
+                    queue.push(player);
+                    matchPlayers();
+                }
                 break;
 
             case 'ready':
@@ -202,7 +207,8 @@ function evaluateGameResult(player: Player) {
                 }
             }
         }
-        //TODO: remove those players socket
+        player.opponent.opponent = undefined
+        player.opponent = undefined
     }
 }
 
