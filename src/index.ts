@@ -108,18 +108,19 @@ wss.on('connection', (ws: WebSocket) => {
                         }
                         gameEnd(player);
                     }
-                    else if (player.score > player.opponent.score) {
-                        player.opponent.socket.send(JSON.stringify({ type: 'score', value: 1 }));
-                        player.socket.send(JSON.stringify({ type: 'score', value: 2 }));
-                    }
-                    else if (player.score < player.opponent.score) {
-                        player.opponent.socket.send(JSON.stringify({ type: 'score', value: 2 }));
-                        player.socket.send(JSON.stringify({ type: 'score', value: 1 }));
-                    }
-                    else {
-                        player.opponent.socket.send(JSON.stringify({ type: 'score', value: 0 }));
-                        player.socket.send(JSON.stringify({ type: 'score', value: 0 }));
-                    }
+                    player.opponent.socket.send(JSON.stringify({ type: 'score', value: player.score }));
+                    // else if (player.score > player.opponent.score) {
+                    //     player.opponent.socket.send(JSON.stringify({ type: 'score', value: 1 }));
+                    //     player.socket.send(JSON.stringify({ type: 'score', value: 2 }));
+                    // }
+                    // else if (player.score < player.opponent.score) {
+                    //     player.opponent.socket.send(JSON.stringify({ type: 'score', value: 2 }));
+                    //     player.socket.send(JSON.stringify({ type: 'score', value: 1 }));
+                    // }
+                    // else {
+                    //     player.opponent.socket.send(JSON.stringify({ type: 'score', value: 0 }));
+                    //     player.socket.send(JSON.stringify({ type: 'score', value: 0 }));
+                    // }
                 }
                 break;
             case 'death':
