@@ -207,13 +207,15 @@ function evaluateGameResult(player: Player) {
                 }
             }
         }
-        player.opponent.opponent = undefined
-        player.opponent = undefined
+        gameEnd(player)
     }
 }
 
 function gameEnd(player: Player) {
-    console.log("gameEnd")
+    if (player.opponent) {
+        player.opponent.opponent = undefined
+        player.opponent = undefined
+    }
 }
 
 function matchPlayers() {
