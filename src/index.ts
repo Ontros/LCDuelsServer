@@ -67,7 +67,7 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                if ((player && player.opponent) || queue.find((value) => { return value.id == player.id })) {
+                if (player && (player.opponent || queue.find((value) => { return value.id == player.id }))) {
                     console.log(queue)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
