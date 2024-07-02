@@ -64,6 +64,9 @@ wss.on('connection', (ws: WebSocket) => {
 
     ws.on('message', (message: string) => {
         const data = JSON.parse(message);
+        if (player) {
+            console.log(player.username, data)
+        }
 
         switch (data.type) {
             case 'register':
