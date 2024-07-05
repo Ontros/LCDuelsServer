@@ -98,7 +98,7 @@ wss.on('connection', (ws: WebSocket) => {
                 break;
 
             case 'score':
-                if (player && player.opponent) {
+                if (player && player.opponent && !player.waitingForResult) {
                     player.score = data.value;
                     player.opponent.socket.send(JSON.stringify({ type: 'score', value: player.score }));
                     //End waiting
@@ -241,12 +241,13 @@ function matchPlayers() {
     }
 }
 
-function handleLeaving(player: Player) {
+function handleLeaving(player: Player | null) {
     if (player) {
         queue.splice(queue.indexOf(player), 1);
         if (player.opponent) {
             player.opponent.socket.send(JSON.stringify({ type: 'opponent_left' }));
             player.opponent.opponent = undefined;
+            player.opponent = undefined;
         }
     }
 }
