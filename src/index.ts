@@ -117,14 +117,18 @@ wss.on('connection', (ws: WebSocket) => {
                 }
                 break;
             case 'death':
-                player.dead = true;
-                player.waitingForResult = true;
-                evaluateGameResult(player)
+                if (player) {
+                    player.dead = true;
+                    player.waitingForResult = true;
+                    evaluateGameResult(player)
+                }
                 break;
 
             case 'liftoff':
-                player.waitingForResult = true;
-                evaluateGameResult(player)
+                if (player) {
+                    player.waitingForResult = true;
+                    evaluateGameResult(player)
+                }
                 break;
 
             case 'leave':
@@ -188,7 +192,7 @@ function evaluateGameResult(player: Player) {
                 //Both survived
                 //Based on loot
                 if (player.opponent.score > player.score) {
-                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "4" }))
+                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                     player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
                 }
                 else if (player.score > player.opponent.score) {
@@ -204,10 +208,19 @@ function evaluateGameResult(player: Player) {
         }
         gameEnd(player)
     }
+    else {
+        if (player.opponent) {
+            if (player.score < player.opponent.score) {
+                player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
+                player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                gameEnd(player);
+            }
+        }
+    }
 }
 
 function gameEnd(player: Player) {
-    if (player.opponent) {
+    if (player && player.opponent) {
         player.opponent.opponent = undefined
         player.opponent = undefined
     }
