@@ -210,7 +210,7 @@ function evaluateGameResult(player: Player) {
     }
     else {
         if (player.opponent) {
-            if (player.score < player.opponent.score) {
+            if (player.score < player.opponent.score || (player.dead && player.score == player.opponent.score)) {
                 player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                 player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
                 gameEnd(player);
