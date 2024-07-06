@@ -98,13 +98,18 @@ wss.on('connection', (ws: WebSocket) => {
                 break;
 
             case 'score':
-                if (player && player.opponent && player.opponent.opponent && !player.waitingForResult) {
+                if (player && player.opponent && !player.waitingForResult) {
                     player.score = parseInt(data.value);
                     player.opponent.socket.send(JSON.stringify({ type: 'score', value: data.value }));
                     //End waiting
                     if (player.opponent.waitingForResult && player.opponent.dead && player.score >= player.opponent.score) {
                         player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                         player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                        gameEnd(player);
+                    }
+                    else if (player.opponent.waitingForResult && !player.opponent.score && player.score) {
+                        player.socket.send(JSON.stringify({ type: 'won', value: "7" }))
+                        player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
                         gameEnd(player);
                     }
                 }
