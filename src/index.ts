@@ -98,17 +98,13 @@ wss.on('connection', (ws: WebSocket) => {
                 break;
 
             case 'score':
-                if (player && player.opponent && !player.waitingForResult) {
+                if (player && player.opponent && player.opponent.opponent && !player.waitingForResult) {
                     player.score = data.value;
+                    player.opponent.opponent.score = data.value;
                     player.opponent.socket.send(JSON.stringify({ type: 'score', value: player.score }));
                     //End waiting
                     if (player.opponent.waitingForResult) {
-                        if (player.dead && player.score >= player.opponent.score) {
-                            player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
-                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
-                            gameEnd(player);
-                        }
-                        else if (!player.dead && player.score > player.opponent.score) {
+                        if (player.opponent.dead && player.score >= player.opponent.score) {
                             player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                             player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
                             gameEnd(player);
@@ -165,8 +161,8 @@ function evaluateGameResult(player: Player) {
             else {
                 if (player.opponent.score == 0 && player.score) {
                     //Opponent chicked out
-                    player.socket.send(JSON.stringify({ type: 'won', value: "1" }))
-                    player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "2" }))
+                    player.socket.send(JSON.stringify({ type: 'won', value: "7" }))
+                    player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
                 }
                 else {
                     //Only you died
@@ -179,8 +175,8 @@ function evaluateGameResult(player: Player) {
             if (player.opponent.dead) {
                 if (player.score == 0 && player.opponent.score) {
                     //You chickened out
-                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "1" }))
-                    player.socket.send(JSON.stringify({ type: 'lost', value: "2" }))
+                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "7" }))
+                    player.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
                 }
                 else {
                     //Only opponent died
