@@ -70,7 +70,7 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                if (player && (player.opponent || queue.find((value) => { return value.id == player.id }))) {
+                if (player && player.socket && (player.opponent || queue.find((value) => { return value.id == player.id }))) {
                     console.log(queue)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
@@ -82,7 +82,7 @@ wss.on('connection', (ws: WebSocket) => {
                 break;
 
             case 'ready':
-                if (player && player.opponent) {
+                if (player && player.opponent && player.socket && player.opponent.socket) {
                     player.ready = true;
                     if (player.opponent.ready) {
                         player.socket.send(JSON.stringify({ type: 'game_start' }));
@@ -92,13 +92,13 @@ wss.on('connection', (ws: WebSocket) => {
                 break;
 
             case 'position':
-                if (player && player.opponent) {
+                if (player && player.opponent && player.socket && player.opponent.socket) {
                     player.opponent.socket.send(JSON.stringify({ type: 'position', value: data.value }));
                 }
                 break;
 
             case 'score':
-                if (player && player.opponent && !player.waitingForResult) {
+                if (player && player.opponent && player.socket && player.opponent.socket && !player.waitingForResult) {
                     player.score = parseInt(data.value);
                     player.opponent.socket.send(JSON.stringify({ type: 'score', value: data.value }));
                     //End waiting
@@ -115,7 +115,7 @@ wss.on('connection', (ws: WebSocket) => {
                 }
                 break;
             case 'death':
-                if (player) {
+                if (player && player.socket && player.socket && player.opponent?.socket) {
                     player.dead = true;
                     player.waitingForResult = true;
                     evaluateGameResult(player)
@@ -123,7 +123,7 @@ wss.on('connection', (ws: WebSocket) => {
                 break;
 
             case 'liftoff':
-                if (player) {
+                if (player && player.opponent && player.socket && player.opponent.socket) {
                     player.waitingForResult = true;
                     evaluateGameResult(player)
                 }
@@ -248,7 +248,7 @@ function matchPlayers() {
 function handleLeaving(player: Player | null) {
     if (player) {
         queue.splice(queue.indexOf(player), 1);
-        if (player.opponent) {
+        if (player.opponent && player.opponent.socket) {
             player.opponent.socket.send(JSON.stringify({ type: 'opponent_left' }));
             player.opponent.opponent = undefined;
             player.opponent = undefined;
