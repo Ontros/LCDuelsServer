@@ -75,7 +75,7 @@ wss.on('connection', (ws: WebSocket) => {
         switch (data.type) {
             case 'register':
                 if (player && player.socket && (player.opponent || queue[player.queueName])) {
-                    console.log(queue)
+                    console.log("in_game_error detected", queue)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
@@ -228,13 +228,14 @@ function evaluateGameResult(player: Player) {
 
 function gameEnd(player: Player) {
     if (player && player.opponent) {
+        console.log("ending game");
         player.opponent.opponent = undefined
         player.opponent = undefined
     }
 }
 
 function matchPlayers(pl: Player, queueName: string) {
-    console.log("queue", queue)
+    console.log("queue start", queue)
     const player2 = queue[queueName];
     if (player2) {
         const player1 = pl;
@@ -252,9 +253,11 @@ function matchPlayers(pl: Player, queueName: string) {
     else {
         queue[queueName] = pl;
     }
+    console.log("queue end", queue)
 }
 
 function handleLeaving(player: Player | null) {
+    console.log("player left:", player)
     if (player) {
         if (player.id == queue[player.queueName]?.id) {
             queue[player.queueName] = undefined;
