@@ -52,12 +52,13 @@ interface Player {
     waitingForResult: boolean;
     dead: boolean;
     score: number;
+    queueName: string;
 }
 
 // Create a new WebSocket server
 const wss = new WebSocketServer({ port: 8080 });
 
-const queue: Player[] = [];
+const queue: { [key: string]: (Player | undefined) } = {};
 
 wss.on('connection', (ws: WebSocket) => {
     let player: Player;
@@ -70,14 +71,13 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                if (player && player.socket && (player.opponent || queue.find((value) => { return value.id == player.id }))) {
+                if (player && player.socket && (player.opponent || queue[player.queueName])) {
                     console.log(queue)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false };
-                    queue.push(player);
-                    matchPlayers();
+                    var queueName = data.queueName ? data.queueName : ""
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName };
                 }
                 break;
 
@@ -229,11 +229,11 @@ function gameEnd(player: Player) {
     }
 }
 
-function matchPlayers() {
+function matchPlayers(pl: Player, queueName: string) {
     console.log("queue", queue)
-    if (queue.length >= 2) {
-        const player1 = queue.shift()!;
-        const player2 = queue.shift()!;
+    const player2 = queue[queueName];
+    if (player2) {
+        const player1 = pl;
 
         player1.opponent = player2;
         player2.opponent = player1;
@@ -242,12 +242,19 @@ function matchPlayers() {
 
         player1.socket.send(JSON.stringify({ type: 'match_found', opponentId: player2.id, opponentUsername: player2.username, seed }));
         player2.socket.send(JSON.stringify({ type: 'match_found', opponentId: player1.id, opponentUsername: player1.username, seed }));
+
+        queue[queueName] = undefined;
+    }
+    else {
+        queue[queueName] = pl;
     }
 }
 
 function handleLeaving(player: Player | null) {
     if (player) {
-        queue.splice(queue.indexOf(player), 1);
+        if (player.id == queue[player.queueName]?.id) {
+            queue[player.queueName] = undefined;
+        }
         if (player.opponent && player.opponent.socket) {
             player.opponent.socket.send(JSON.stringify({ type: 'opponent_left' }));
             player.opponent.opponent = undefined;
