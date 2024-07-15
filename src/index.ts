@@ -74,12 +74,12 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                if (player && player.socket && (player.opponent || queue[player.queueName])) {
-                    console.log("in_game_error detected", queue)
+                var queueName = data.queueName ? data.queueName : ""
+                if (player && player.socket && player.opponent) {
+                    console.log("in_game_error detected, players opponent", player.opponent)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    var queueName = data.queueName ? data.queueName : ""
                     player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName };
                     matchPlayers(player, queueName)
                 }
