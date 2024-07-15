@@ -78,6 +78,7 @@ wss.on('connection', (ws: WebSocket) => {
                 else {
                     var queueName = data.queueName ? data.queueName : ""
                     player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName };
+                    matchPlayers(player, queueName)
                 }
                 break;
 
