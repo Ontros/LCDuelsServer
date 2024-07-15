@@ -68,6 +68,9 @@ wss.on('connection', (ws: WebSocket) => {
         if (player) {
             console.log(player.username, data)
         }
+        else {
+            console.log("New player", data)
+        }
 
         switch (data.type) {
             case 'register':
