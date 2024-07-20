@@ -137,6 +137,12 @@ wss.on('connection', (ws: WebSocket) => {
                 }
                 break;
 
+            case 'chat':
+                if (player && player.opponent && player.socket && player.opponent.socket) {
+                    player.opponent.socket.send(JSON.stringify({ type: 'chat', value: data.value }))
+                }
+                break;
+
             case 'leave':
                 handleLeaving(player);
                 break;

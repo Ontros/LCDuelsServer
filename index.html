@@ -114,6 +114,7 @@
 
         function sendReady() {
             ws.send(JSON.stringify({ type: 'ready' }));
+            ws.send(JSON.stringify({ type: 'chat', value: "Im ready" }));
             log('Sent ready');
         }
 
