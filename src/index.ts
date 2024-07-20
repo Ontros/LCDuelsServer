@@ -76,7 +76,7 @@ wss.on('connection', (ws: WebSocket) => {
             case 'register':
                 var queueName = data.queueName ? data.queueName.toLowerCase() : ""
                 if (queueName == "" && data.version != "v56") {
-                    player.socket.send(JSON.stringify({ type: 'error', value: "Please use V56 for public queues" }))
+                    ws.send(JSON.stringify({ type: 'error', value: "Please use V56 for public queues" }))
                     break;
                 }
                 if (player && player.socket && player.opponent) {
