@@ -34,6 +34,10 @@
         <input type="text" id="steamId">
         <label for="steamUsername">Username:</label>
         <input type="text" id="steamUsername">
+        <label for="version">Version:</label>
+        <input type="text" id="version">
+        <label for="queueName">QName:</label>
+        <input type="text" id="queueName">
         <button onclick="register()">Register</button>
     </div>
     <div>
@@ -82,15 +86,17 @@
                     log('Your opponent has left the game.');
                     break;
                 default:
-                    log(`Unknown message type: ${message.type}`);
+                    log(`Unknown message type: ${message.type} ${message.value}`);
             }
         }
 
         function register() {
             const steamId = document.getElementById('steamId').value;
             const steamUsername = document.getElementById('steamUsername').value;
+            const version = document.getElementById('version').value;
+            const queueName = document.getElementById('queueName').value;
             if (steamId && steamUsername) {
-                ws.send(JSON.stringify({ type: 'register', steamId, steamUsername }));
+                ws.send(JSON.stringify({ type: 'register', steamId, steamUsername, version, queueName }));
                 log(`Registered with Steam ID: ${steamId}, Username: ${steamUsername}`);
             } else {
                 log('Please enter both Steam ID and Username');
