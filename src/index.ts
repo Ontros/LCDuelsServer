@@ -74,11 +74,11 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                if (queueName == "" && data.version != "V56") {
+                if (queueName == "" && data.version != "v56") {
                     player.socket.send(JSON.stringify({ type: 'error', value: "Please use V56 for public queues" }))
                     break;
                 }
-                var queueName = data.queueName ? data.queueName : ""
+                var queueName = data.queueName ? data.queueName.toLowerCase() : ""
                 if (player && player.socket && player.opponent) {
                     console.log("in_game_error detected, players opponent", player.opponent)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
