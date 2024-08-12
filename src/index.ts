@@ -53,6 +53,7 @@ interface Player {
     dead: boolean;
     score: number;
     queueName: string;
+    gameMode: 1 | 2 | 3;
 }
 
 // Create a new WebSocket server
@@ -79,12 +80,16 @@ wss.on('connection', (ws: WebSocket) => {
                     ws.send(JSON.stringify({ type: 'error', value: "Please use V56 for public queues" }))
                     break;
                 }
+                if (data.gameMode != 1 && data.gameMode != 2 && data.gameMode != 3) {
+                    ws.send(JSON.stringify({ type: 'error', value: "Invalid game mode, please update the mod!" }))
+                    break;
+                }
                 if (player && player.socket && player.opponent) {
                     console.log("in_game_error detected, players opponent", player.opponent)
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName };
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode: data.gameMode };
                     matchPlayers(player, queueName)
                 }
                 break;
