@@ -92,6 +92,7 @@ wss.on('connection', (ws: WebSocket) => {
                     break;
                 }
                 var gameMode = parseInt(data.gameMode)
+                console.log(gameMode);
                 if (gameMode != 1 && gameMode != 2 && gameMode != 3) {
                     ws.send(JSON.stringify({ type: 'error', value: "Invalid game mode, please update the mod!" }))
                     break;
