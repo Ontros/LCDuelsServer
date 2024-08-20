@@ -165,9 +165,15 @@ wss.on('connection', (ws: WebSocket) => {
                         player.curQuota = parseInt(data["curQuota"])
                     }
                     else if (player.gameMode == 3) {
+                        player.waitingForResult = true;
                         player.curDay = parseInt(data["curDay"])
                         player.curQuota = parseInt(data["curQuota"])
-                        player.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curQuota * 4 + player.curDay] }))
+                        if (player.opponent.waitingForResult) {
+                            player.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curQuota * 4 + player.curDay] }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curQuota * 4 + player.curDay] }))
+                            player.waitingForResult = false;
+                            player.opponent.waitingForResult = false;
+                        }
                     }
                 }
                 break;
