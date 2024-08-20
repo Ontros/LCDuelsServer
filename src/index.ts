@@ -378,6 +378,7 @@ function evaluateGameResult(player: Player) {
                     }
                 }
             }
+            player.waitingForResult = true;
             if (player.score == 2) {
                 player.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.points, enemyScore: player.opponent?.points }))
                 player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.opponent.points, enemyScore: player.points }))
@@ -386,13 +387,15 @@ function evaluateGameResult(player: Player) {
                 player.opponent.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.opponent.points, enemyScore: player.points }))
                 player.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.points, enemyScore: player.opponent.points }))
             }
-            else if (player.opponent) {
+            else if (player.opponent?.waitingForResult) {
                 const seed = Math.floor(Math.random() * 100000000) + 1;
 
                 player.ready = false;
                 player.opponent.ready = false;
                 player.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.opponent.id, opponentUsername: player.opponent.username, seed, gameMode: player.gameMode }));
                 player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
+                player.waitingForResult = false;
+                player.opponent.waitingForResult = false;
             }
             break;
         case 3:
