@@ -296,34 +296,34 @@ function evaluateGameResult(player: Player) {
                         //Both died
                         //Based on loot
                         if (player.opponent.score > player.score) {
-                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                             player.opponent.points++;
-                            player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3", yourScore: player.opponent.points, enemyScore: player.points }))
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "4", yourScore: player.points, enemyScore: player.opponent?.points }))
                         }
                         else if (player.score > player.opponent.score) {
-                            player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                             player.points++;
-                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                            player.socket.send(JSON.stringify({ type: 'won', value: "3", yourScore: player.points, enemyScore: player.opponent?.points }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4", yourScore: player.opponent.points, enemyScore: player.points }))
                         }
                         else {
                             //Score tie won the player that survived longest
-                            player.socket.send(JSON.stringify({ type: 'won', value: "9" }))
                             player.points++;
-                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "10" }))
+                            player.socket.send(JSON.stringify({ type: 'won', value: "9", yourScore: player.points, enemyScore: player.opponent?.points }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "10", yourScore: player.opponent.points, enemyScore: player.points }))
                         }
                     }
                     else {
                         if (player.opponent.score == 0 && player.score) {
                             //Opponent chicked out
-                            player.socket.send(JSON.stringify({ type: 'won', value: "7" }))
                             player.points++;
-                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
+                            player.socket.send(JSON.stringify({ type: 'won', value: "7", yourScore: player.points, enemyScore: player.opponent?.points }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "8", yourScore: player.opponent.points, enemyScore: player.points }))
                         }
                         else {
                             //Only you died
-                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "1" }))
                             player.points++;
-                            player.socket.send(JSON.stringify({ type: 'lost', value: "2" }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "1", yourScore: player.opponent.points, enemyScore: player.points }))
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "2", yourScore: player.points, enemyScore: player.opponent?.points }))
                         }
                     }
                 }
@@ -331,35 +331,35 @@ function evaluateGameResult(player: Player) {
                     if (player.opponent.dead) {
                         if (player.score == 0 && player.opponent.score) {
                             //You chickened out
-                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "7" }))
                             player.opponent.points++;
-                            player.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "7", yourScore: player.opponent.points, enemyScore: player.points }))
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "8", yourScore: player.points, enemyScore: player.opponent?.points }))
                         }
                         else {
                             //Only opponent died
-                            player.socket.send(JSON.stringify({ type: 'won', value: "1" }))
                             player.points++;
-                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "2" }))
+                            player.socket.send(JSON.stringify({ type: 'won', value: "1", yourScore: player.points, enemyScore: player.opponent?.points }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "2", yourScore: player.opponent.points, enemyScore: player.points }))
                         }
                     }
                     else {
                         //Both survived
                         //Based on loot
                         if (player.opponent.score > player.score) {
-                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                             player.opponent.points++;
-                            player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3", yourScore: player.opponent.points, enemyScore: player.points }))
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "4", yourScore: player.points, enemyScore: player.opponent?.points }))
                         }
                         else if (player.score > player.opponent.score) {
-                            player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
                             player.points++;
-                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                            player.socket.send(JSON.stringify({ type: 'won', value: "3", yourScore: player.points, enemyScore: player.opponent?.points }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4", yourScore: player.opponent.points, enemyScore: player.points }))
                         }
                         else {
                             //Score tie won the player that left sooner
-                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "5" }))
                             player.opponent.points++;
-                            player.socket.send(JSON.stringify({ type: 'lost', value: "6" }))
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "5", yourScore: player.opponent.points, enemyScore: player.points }))
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "6", yourScore: player.points, enemyScore: player.opponent?.points }))
                         }
                     }
                 }
@@ -367,14 +367,14 @@ function evaluateGameResult(player: Player) {
             else {
                 if (player.opponent) {
                     if (player.dead && player.score < player.opponent.score) {
-                        player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }));
                         player.opponent.points++;
-                        player.socket.send(JSON.stringify({ type: 'lost', value: "4" }));
+                        player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3", yourScore: player.opponent.points, enemyScore: player.points }));
+                        player.socket.send(JSON.stringify({ type: 'lost', value: "4", yourScore: player.points, enemyScore: player.opponent?.points }));
                     }
                     else if (player.dead && player.score == player.opponent.score) {
-                        player.opponent.socket.send(JSON.stringify({ type: 'won', value: "9" }));
                         player.opponent.points++;
-                        player.socket.send(JSON.stringify({ type: 'lost', value: "10" }));
+                        player.opponent.socket.send(JSON.stringify({ type: 'won', value: "9", yourScore: player.opponent.points, enemyScore: player.points }));
+                        player.socket.send(JSON.stringify({ type: 'lost', value: "10", yourScore: player.points, enemyScore: player.opponent?.points }));
                     }
                 }
             }
