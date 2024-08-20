@@ -16,6 +16,12 @@ import { WebSocketServer, WebSocket } from 'ws';
 //8 - lost because you chickened out
 //9 - won because surviving longer
 //10 - lost because dieing sooner
+//11 - won higher quota
+//12 - lost lower quota
+//13 - won more loot on ship
+//14 - lost less loot on ship
+//15 - won Bo3
+//16 - lost Bo3
 
 // app.get('/', (req, res) => {
 //     res.send(seed);
@@ -52,10 +58,12 @@ interface Player {
     waitingForResult: boolean;
     dead: boolean;
     score: number;
+    points: number;
     queueName: string;
     gameMode: 1 | 2 | 3;
     curDay: number;
     curQuota: number;
+    ejected: boolean;
 }
 
 // Create a new WebSocket server
@@ -96,7 +104,7 @@ wss.on('connection', (ws: WebSocket) => {
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, curQuota: 1 };
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, curQuota: 1, ejected: false, points: 0 };
                     matchPlayers(player, queueName)
                 }
                 break;
@@ -135,7 +143,7 @@ wss.on('connection', (ws: WebSocket) => {
                 }
                 break;
             case 'death':
-                if (player && player.socket && player.socket && player.opponent?.socket && player.gameMode == 1) {
+                if (player && player.socket && player.socket && player.opponent?.socket && (player.gameMode == 1 || player.gameMode == 2)) {
                     player.dead = true;
                     player.waitingForResult = true;
                     evaluateGameResult(player)
@@ -149,10 +157,14 @@ wss.on('connection', (ws: WebSocket) => {
                         evaluateGameResult(player)
                     }
                     else if (player.gameMode == 2) {
-
+                        player.waitingForResult = true;
+                        evaluateGameResult(player)
+                        player.curDay = parseInt(data["curDay"])
+                        player.curQuota = parseInt(data["curQuota"])
                     }
                     else if (player.gameMode == 3) {
-
+                        player.curDay = parseInt(data["curDay"])
+                        player.curQuota = parseInt(data["curQuota"])
                     }
                 }
                 break;
@@ -167,7 +179,9 @@ wss.on('connection', (ws: WebSocket) => {
                         handleLeaving(player)
                     }
                     else if (player.gameMode == 3) {
-
+                        player.ejected = true;
+                        player.waitingForResult = true;
+                        handleLeaving(player)
                     }
                 }
                 break;
@@ -273,7 +287,137 @@ function evaluateGameResult(player: Player) {
             }
             break;
         case 2:
+            if (player.opponent?.waitingForResult) {
+                if (player.dead) {
+                    if (player.opponent.dead) {
+                        //Both died
+                        //Based on loot
+                        if (player.opponent.score > player.score) {
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
+                            player.opponent.points++;
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                        }
+                        else if (player.score > player.opponent.score) {
+                            player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
+                            player.points++;
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                        }
+                        else {
+                            //Score tie won the player that survived longest
+                            player.socket.send(JSON.stringify({ type: 'won', value: "9" }))
+                            player.points++;
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "10" }))
+                        }
+                    }
+                    else {
+                        if (player.opponent.score == 0 && player.score) {
+                            //Opponent chicked out
+                            player.socket.send(JSON.stringify({ type: 'won', value: "7" }))
+                            player.points++;
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
+                        }
+                        else {
+                            //Only you died
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "1" }))
+                            player.points++;
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "2" }))
+                        }
+                    }
+                }
+                else {
+                    if (player.opponent.dead) {
+                        if (player.score == 0 && player.opponent.score) {
+                            //You chickened out
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "7" }))
+                            player.opponent.points++;
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "8" }))
+                        }
+                        else {
+                            //Only opponent died
+                            player.socket.send(JSON.stringify({ type: 'won', value: "1" }))
+                            player.points++;
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "2" }))
+                        }
+                    }
+                    else {
+                        //Both survived
+                        //Based on loot
+                        if (player.opponent.score > player.score) {
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }))
+                            player.opponent.points++;
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                        }
+                        else if (player.score > player.opponent.score) {
+                            player.socket.send(JSON.stringify({ type: 'won', value: "3" }))
+                            player.points++;
+                            player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "4" }))
+                        }
+                        else {
+                            //Score tie won the player that left sooner
+                            player.opponent.socket.send(JSON.stringify({ type: 'won', value: "5" }))
+                            player.opponent.points++;
+                            player.socket.send(JSON.stringify({ type: 'lost', value: "6" }))
+                        }
+                    }
+                }
+            }
+            else {
+                if (player.opponent) {
+                    if (player.dead && player.score < player.opponent.score) {
+                        player.opponent.socket.send(JSON.stringify({ type: 'won', value: "3" }));
+                        player.opponent.points++;
+                        player.socket.send(JSON.stringify({ type: 'lost', value: "4" }));
+                    }
+                    else if (player.dead && player.score == player.opponent.score) {
+                        player.opponent.socket.send(JSON.stringify({ type: 'won', value: "9" }));
+                        player.opponent.points++;
+                        player.socket.send(JSON.stringify({ type: 'lost', value: "10" }));
+                    }
+                }
+            }
+            if (player.score == 2) {
+                player.socket.send(JSON.stringify({ type: 'won', value: "14" }))
+                player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "15" }))
+            }
+            else if (player.opponent?.score == 2) {
+                player.opponent.socket.send(JSON.stringify({ type: 'won', value: "14" }))
+                player.socket.send(JSON.stringify({ type: 'lost', value: "15" }))
+            }
+            else if (player.opponent) {
+                const seed = Math.floor(Math.random() * 100000000) + 1;
+
+                player.ready = false;
+                player.opponent.ready = false;
+                player.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.opponent.id, opponentUsername: player.opponent.username, seed, gameMode: player.gameMode }));
+                player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
+            }
+            break;
         case 3:
+            if (player.opponent?.waitingForResult) {
+                if (player.curQuota > player.opponent.curQuota) {
+                    player.socket.send(JSON.stringify({ type: 'won', value: "11" }))
+                    player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "12" }))
+                }
+                else if (player.curQuota > player.opponent.curQuota) {
+                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "11" }))
+                    player.socket.send(JSON.stringify({ type: 'lost', value: "12" }))
+                }
+                else if (player.score > player.opponent.score) {
+                    player.socket.send(JSON.stringify({ type: 'won', value: "13" }))
+                    player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "14" }))
+                }
+                else if (player.score < player.opponent.score) {
+                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "13" }))
+                    player.socket.send(JSON.stringify({ type: 'lost', value: "14" }))
+                }
+                else {
+                    //Time based
+                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "5" }))
+                    player.socket.send(JSON.stringify({ type: 'lost', value: "6" }))
+                }
+
+            }
+            break;
     }
 }
 
