@@ -388,14 +388,21 @@ function evaluateGameResult(player: Player) {
                 player.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.points, enemyScore: player.opponent.points }))
             }
             else if (player.opponent?.waitingForResult) {
-                const seed = Math.floor(Math.random() * 100000000) + 1;
+                setTimeout(() => {
+                    const seed = Math.floor(Math.random() * 100000000) + 1;
 
-                player.ready = false;
-                player.opponent.ready = false;
-                player.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.opponent.id, opponentUsername: player.opponent.username, seed, gameMode: player.gameMode }));
-                player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
-                player.waitingForResult = false;
-                player.opponent.waitingForResult = false;
+                    if (player.opponent) {
+                        player.ready = false;
+                        player.opponent.ready = false;
+                        player.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.opponent.id, opponentUsername: player.opponent.username, seed, gameMode: player.gameMode }));
+                        player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
+                        player.waitingForResult = false;
+                        player.opponent.waitingForResult = false;
+                    }
+                    else {
+                        console.log("opponent left furing the 1s cooldown")
+                    }
+                }, 1000)
             }
             break;
         case 3:
