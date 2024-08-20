@@ -64,6 +64,7 @@ interface Player {
     curDay: number;
     curQuota: number;
     ejected: boolean;
+    seeds: number[];
 }
 
 // Create a new WebSocket server
@@ -104,7 +105,7 @@ wss.on('connection', (ws: WebSocket) => {
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, curQuota: 1, ejected: false, points: 0 };
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, curQuota: 1, ejected: false, points: 0, seeds: [] };
                     matchPlayers(player, queueName)
                 }
                 break;
@@ -165,6 +166,7 @@ wss.on('connection', (ws: WebSocket) => {
                     else if (player.gameMode == 3) {
                         player.curDay = parseInt(data["curDay"])
                         player.curQuota = parseInt(data["curQuota"])
+                        player.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curQuota * 4 + player.curDay] }))
                     }
                 }
                 break;
@@ -376,12 +378,12 @@ function evaluateGameResult(player: Player) {
                 }
             }
             if (player.score == 2) {
-                player.socket.send(JSON.stringify({ type: 'won', value: "14" }))
-                player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "15" }))
+                player.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.points, enemyScore: player.opponent?.points }))
+                player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.opponent.points, enemyScore: player.points }))
             }
             else if (player.opponent?.score == 2) {
-                player.opponent.socket.send(JSON.stringify({ type: 'won', value: "14" }))
-                player.socket.send(JSON.stringify({ type: 'lost', value: "15" }))
+                player.opponent.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.opponent.points, enemyScore: player.points }))
+                player.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.points, enemyScore: player.opponent.points }))
             }
             else if (player.opponent) {
                 const seed = Math.floor(Math.random() * 100000000) + 1;
@@ -444,6 +446,14 @@ function matchPlayers(pl: Player, queueName: string) {
 
         player1.socket.send(JSON.stringify({ type: 'match_found', opponentId: player2.id, opponentUsername: player2.username, seed, gameMode: player1.gameMode }));
         player2.socket.send(JSON.stringify({ type: 'match_found', opponentId: player1.id, opponentUsername: player1.username, seed, gameMode: player1.gameMode }));
+        if (player1.gameMode == 2) {
+            for (var i = 0; i <= 100; i++) {
+                const newSeed = Math.floor(Math.random() * 100000000) + 1;
+                player1.seeds[i] = newSeed;
+                player2.seeds[i] = newSeed;
+            }
+
+        }
 
         queue[queueName] = undefined;
     }
