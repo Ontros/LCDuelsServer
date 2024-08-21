@@ -87,8 +87,8 @@ wss.on('connection', (ws: WebSocket) => {
         switch (data.type) {
             case 'register':
                 var queueName = data.queueName ? data.queueName.toLowerCase() : ""
-                if (queueName == "" && data.version != "v61") {
-                    ws.send(JSON.stringify({ type: 'error', value: "Please use V61 for public queues" }))
+                if (queueName == "" && data.version != "v62") {
+                    ws.send(JSON.stringify({ type: 'error', value: "Please use V62 for public queues" }))
                     break;
                 }
                 var gameMode = parseInt(data.gameMode)
@@ -148,7 +148,6 @@ wss.on('connection', (ws: WebSocket) => {
                 if (player && player.socket && player.socket && player.opponent?.socket && (player.gameMode == 1 || player.gameMode == 2)) {
                     player.dead = true;
                     player.waitingForResult = true;
-                    evaluateGameResult(player)
                 }
                 break;
 
@@ -184,7 +183,7 @@ wss.on('connection', (ws: WebSocket) => {
                     else if (player.gameMode == 3) {
                         player.ejected = true;
                         player.waitingForResult = true;
-                        handleLeaving(player)
+                        evaluateGameResult(player)
                     }
                 }
                 break;
@@ -379,11 +378,11 @@ function evaluateGameResult(player: Player) {
                 }
             }
             player.waitingForResult = true;
-            if (player.score == 2) {
+            if (player.points == 2) {
                 player.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.points, enemyScore: player.opponent?.points }))
                 player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.opponent.points, enemyScore: player.points }))
             }
-            else if (player.opponent?.score == 2) {
+            else if (player.opponent?.points == 2) {
                 player.opponent.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.opponent.points, enemyScore: player.points }))
                 player.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.points, enemyScore: player.opponent.points }))
             }
