@@ -62,7 +62,6 @@ interface Player {
     queueName: string;
     gameMode: 1 | 2 | 3;
     curDay: number;
-    curQuota: number;
     ejected: boolean;
     seeds: number[];
 }
@@ -106,7 +105,7 @@ wss.on('connection', (ws: WebSocket) => {
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, curQuota: 1, ejected: false, points: 0, seeds: [] };
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, ejected: false, points: 0, seeds: [] };
                     matchPlayers(player, queueName)
                 }
                 break;
@@ -161,12 +160,10 @@ wss.on('connection', (ws: WebSocket) => {
                         player.waitingForResult = true;
                         evaluateGameResult(player)
                         player.curDay = parseInt(data["curDay"])
-                        player.curQuota = parseInt(data["curQuota"])
                     }
                     else if (player.gameMode == 3) {
                         player.curDay = parseInt(data["curDay"])
-                        player.curQuota = parseInt(data["curQuota"])
-                        player.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curQuota * 4 + player.curDay] }))
+                        player.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curDay] }))
                     }
                 }
                 break;
@@ -406,11 +403,11 @@ function evaluateGameResult(player: Player) {
             break;
         case 3:
             if (player.opponent?.waitingForResult) {
-                if (player.curQuota > player.opponent.curQuota) {
+                if (player.curDay > player.opponent.curDay) {
                     player.socket.send(JSON.stringify({ type: 'won', value: "11" }))
                     player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "12" }))
                 }
-                else if (player.curQuota > player.opponent.curQuota) {
+                else if (player.curDay > player.opponent.curDay) {
                     player.opponent.socket.send(JSON.stringify({ type: 'won', value: "11" }))
                     player.socket.send(JSON.stringify({ type: 'lost', value: "12" }))
                 }

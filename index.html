@@ -96,7 +96,7 @@
             const version = document.getElementById('version').value;
             const queueName = document.getElementById('queueName').value;
             if (steamId && steamUsername) {
-                ws.send(JSON.stringify({ type: 'register', steamId, steamUsername, version, queueName }));
+                ws.send(JSON.stringify({ type: 'register', steamId, steamUsername, version, queueName, gameMode: 2, modVersion: "1.2.0.0" }));
                 log(`Registered with Steam ID: ${steamId}, Username: ${steamUsername}`);
             } else {
                 log('Please enter both Steam ID and Username');
