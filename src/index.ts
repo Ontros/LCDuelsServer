@@ -61,9 +61,6 @@ interface Player {
     points: number;
     queueName: string;
     gameMode: 1 | 2 | 3;
-    curDay: number;
-    ejected: boolean;
-    seeds: number[];
 }
 
 // Create a new WebSocket server
@@ -105,7 +102,7 @@ wss.on('connection', (ws: WebSocket) => {
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, curDay: 1, ejected: false, points: 0, seeds: [] };
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, points: 0 };
                     matchPlayers(player, queueName)
                 }
                 break;
@@ -144,44 +141,24 @@ wss.on('connection', (ws: WebSocket) => {
                 }
                 break;
             case 'death':
-                if (player && player.socket && player.socket && player.opponent?.socket && (player.gameMode == 1 || player.gameMode == 2)) {
+                if (player && player.socket && player.socket && player.opponent?.socket) {
                     player.dead = true;
-                    player.waitingForResult = true;
+                    if (player.gameMode == 1) {
+                        player.waitingForResult = true;
+                    }
                 }
                 break;
 
             case 'liftoff':
                 if (player && player.opponent && player.socket && player.opponent.socket) {
-                    if (player.gameMode == 1) {
-                        player.waitingForResult = true;
-                        evaluateGameResult(player)
-                    }
-                    else if (player.gameMode == 2) {
-                        player.waitingForResult = true;
-                        evaluateGameResult(player)
-                        player.curDay = parseInt(data["curDay"])
-                    }
-                    else if (player.gameMode == 3) {
-                        player.curDay = parseInt(data["curDay"])
-                        player.socket.send(JSON.stringify({ type: 'new_seed', seed: player.seeds[player.curDay] }))
-                    }
+                    player.waitingForResult = true;
+                    evaluateGameResult(player)
                 }
                 break;
             case 'eject':
                 if (player && player.opponent && player.socket && player.opponent.socket) {
-                    if (player.gameMode == 1) {
-                        ws.send(JSON.stringify({ type: 'error', value: "Please dont eject on Bo1" }))
-                        handleLeaving(player)
-                    }
-                    else if (player.gameMode == 2) {
-                        ws.send(JSON.stringify({ type: 'error', value: "Please dont eject on Bo3" }))
-                        handleLeaving(player)
-                    }
-                    else if (player.gameMode == 3) {
-                        player.ejected = true;
-                        player.waitingForResult = true;
-                        evaluateGameResult(player)
-                    }
+                    ws.send(JSON.stringify({ type: 'error', value: "Please dont eject" }))
+                    handleLeaving(player)
                 }
                 break;
 
@@ -286,6 +263,7 @@ function evaluateGameResult(player: Player) {
             }
             break;
         case 2:
+        case 3:
             if (player.opponent?.waitingForResult) {
                 if (player.dead) {
                     if (player.opponent.dead) {
@@ -361,13 +339,13 @@ function evaluateGameResult(player: Player) {
                 }
             }
             player.waitingForResult = true;
-            if (player.points == 2) {
-                player.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.points, enemyScore: player.opponent?.points }))
-                player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.opponent.points, enemyScore: player.points }))
+            if (player.points == 2 && player.gameMode == 2) {
+                player.socket.send(JSON.stringify({ type: 'won', value: "15", yourScore: player.points, enemyScore: player.opponent?.points }))
+                player.opponent?.socket.send(JSON.stringify({ type: 'lost', value: "16", yourScore: player.opponent.points, enemyScore: player.points }))
             }
-            else if (player.opponent?.points == 2) {
-                player.opponent.socket.send(JSON.stringify({ type: 'won', value: "14", yourScore: player.opponent.points, enemyScore: player.points }))
-                player.socket.send(JSON.stringify({ type: 'lost', value: "15", yourScore: player.points, enemyScore: player.opponent.points }))
+            else if (player.opponent?.points == 2 && player.gameMode == 2) {
+                player.opponent.socket.send(JSON.stringify({ type: 'won', value: "15", yourScore: player.opponent.points, enemyScore: player.points }))
+                player.socket.send(JSON.stringify({ type: 'lost', value: "16", yourScore: player.points, enemyScore: player.opponent.points }))
             }
             else if (player.opponent?.waitingForResult) {
                 setTimeout(() => {
@@ -385,32 +363,6 @@ function evaluateGameResult(player: Player) {
                         console.log("opponent left furing the 1s cooldown")
                     }
                 }, 1000)
-            }
-            break;
-        case 3:
-            if (player.opponent?.waitingForResult) {
-                if (player.curDay > player.opponent.curDay) {
-                    player.socket.send(JSON.stringify({ type: 'won', value: "11" }))
-                    player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "12" }))
-                }
-                else if (player.curDay > player.opponent.curDay) {
-                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "11" }))
-                    player.socket.send(JSON.stringify({ type: 'lost', value: "12" }))
-                }
-                else if (player.score > player.opponent.score) {
-                    player.socket.send(JSON.stringify({ type: 'won', value: "13" }))
-                    player.opponent.socket.send(JSON.stringify({ type: 'lost', value: "14" }))
-                }
-                else if (player.score < player.opponent.score) {
-                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "13" }))
-                    player.socket.send(JSON.stringify({ type: 'lost', value: "14" }))
-                }
-                else {
-                    //Time based
-                    player.opponent.socket.send(JSON.stringify({ type: 'won', value: "5" }))
-                    player.socket.send(JSON.stringify({ type: 'lost', value: "6" }))
-                }
-
             }
             break;
     }
@@ -439,15 +391,6 @@ function matchPlayers(pl: Player, queueName: string) {
 
         player1.socket.send(JSON.stringify({ type: 'match_found', opponentId: player2.id, opponentUsername: player2.username, seed, gameMode: player1.gameMode }));
         player2.socket.send(JSON.stringify({ type: 'match_found', opponentId: player1.id, opponentUsername: player1.username, seed, gameMode: player1.gameMode }));
-        if (player1.gameMode == 2) {
-            for (var i = 0; i <= 100; i++) {
-                const newSeed = Math.floor(Math.random() * 100000000) + 1;
-                player1.seeds[i] = newSeed;
-                player2.seeds[i] = newSeed;
-            }
-
-        }
-
         queue[queueName] = undefined;
     }
     else {
