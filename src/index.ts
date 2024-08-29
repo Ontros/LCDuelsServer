@@ -82,7 +82,7 @@ wss.on('connection', (ws: WebSocket) => {
 
         switch (data.type) {
             case 'register':
-                var queueName = data.queueName ? data.queueName.toLowerCase() : ""
+                var queueName = data.queueName ? data.queueName.toLowerCase().trim() : ""
                 if (queueName == "" && data.version != "v62") {
                     ws.send(JSON.stringify({ type: 'error', value: "Please use V62 for public queues" }))
                     break;
