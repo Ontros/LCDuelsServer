@@ -172,6 +172,8 @@ wss.on('connection', (ws: WebSocket) => {
                             const seed = Math.floor(Math.random() * 100000000) + 1;
                             player.socket.send(JSON.stringify({ type: 'reroll', seed }));
                             player.opponent.socket.send(JSON.stringify({ type: 'reroll', seed }));
+                            player.reroll = false;
+                            player.opponent.reroll = false;
                         }
                     }
                 }
