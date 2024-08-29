@@ -306,7 +306,7 @@ function evaluateGameResult(player: Player) {
                         }
                         else {
                             //Only you died
-                            player.points++;
+                            player.opponent.points++;
                             player.opponent.socket.send(JSON.stringify({ type: 'won', value: "1", yourScore: player.opponent.points, enemyScore: player.points }))
                             player.socket.send(JSON.stringify({ type: 'lost', value: "2", yourScore: player.points, enemyScore: player.opponent?.points }))
                         }
@@ -365,12 +365,14 @@ function evaluateGameResult(player: Player) {
                     if (player.opponent) {
                         player.ready = false;
                         player.opponent.ready = false;
-                        player.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.opponent.id, opponentUsername: player.opponent.username, seed, gameMode: player.gameMode }));
-                        player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
                         player.waitingForResult = false;
                         player.opponent.waitingForResult = false;
                         player.reroll = false;
                         player.opponent.reroll = false;
+                        player.dead = false;
+                        player.opponent.dead = false;
+                        player.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.opponent.id, opponentUsername: player.opponent.username, seed, gameMode: player.gameMode }));
+                        player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
                     }
                     else {
                         console.log("opponent left furing the 1s cooldown")
