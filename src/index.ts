@@ -61,6 +61,7 @@ interface Player {
     points: number;
     queueName: string;
     gameMode: 1 | 2 | 3;
+    reroll: boolean;
 }
 
 // Create a new WebSocket server
@@ -102,7 +103,7 @@ wss.on('connection', (ws: WebSocket) => {
                     player.socket.send(JSON.stringify({ type: "in_game_error" }));
                 }
                 else {
-                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, points: 0 };
+                    player = { id: data.steamId, username: data.steamUsername, socket: ws, ready: false, score: 0, waitingForResult: false, dead: false, queueName, gameMode, points: 0, reroll: false };
                     matchPlayers(player, queueName)
                 }
                 break;
@@ -165,6 +166,14 @@ wss.on('connection', (ws: WebSocket) => {
             case 'chat':
                 if (player && player.opponent && player.socket && player.opponent.socket) {
                     player.opponent.socket.send(JSON.stringify({ type: 'chat', value: data.value }))
+                    if (data.value == "reroll") {
+                        player.reroll = true;
+                        if (player.opponent.reroll) {
+                            const seed = Math.floor(Math.random() * 100000000) + 1;
+                            player.socket.send(JSON.stringify({ type: 'reroll', seed }));
+                            player.opponent.socket.send(JSON.stringify({ type: 'reroll', seed }));
+                        }
+                    }
                 }
                 break;
 
@@ -358,6 +367,7 @@ function evaluateGameResult(player: Player) {
                         player.opponent.socket.send(JSON.stringify({ type: 'match_found', opponentId: player.id, opponentUsername: player.username, seed, gameMode: player.gameMode }));
                         player.waitingForResult = false;
                         player.opponent.waitingForResult = false;
+                        player.reroll = false;
                     }
                     else {
                         console.log("opponent left furing the 1s cooldown")
