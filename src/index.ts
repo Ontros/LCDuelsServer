@@ -368,6 +368,7 @@ function evaluateGameResult(player: Player) {
                         player.waitingForResult = false;
                         player.opponent.waitingForResult = false;
                         player.reroll = false;
+                        player.opponent.reroll = false;
                     }
                     else {
                         console.log("opponent left furing the 1s cooldown")
