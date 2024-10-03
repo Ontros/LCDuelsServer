@@ -429,7 +429,7 @@ function matchPlayers(pl: Player, queueName: string, gameMode: 1 | 2 | 3) {
     //Send queue information
     //TODO: finish asi posilat arreye hracu
     match.players.filter(pl => pl.socket).forEach(pl => {
-        pl.socket.send(JSON.stringify({ type: 'match_info', opponentId: player2.id, opponentUsername: player2.username, seed, gameMode: player1.gameMode }));
+        pl.socket.send(JSON.stringify({ type: 'match_info', players: getSendablePlayerArray(match?.players), seed: match?.seed, gameMode: match?.gameMode }));
     })
     // const player2 = queue[queueName];
     // if (player2) {
@@ -452,17 +452,41 @@ function matchPlayers(pl: Player, queueName: string, gameMode: 1 | 2 | 3) {
     console.log("queue end", queue)
 }
 
+//TODO: test if player.match is by reference or value
 function handleLeaving(player: Player | null) {
     console.log("player left:", player?.username)
-    if (player) {
-        if (player.id == queue[player.queueName]?.id) {
-            queue[player.queueName] = undefined;
+    if (player && player.match) {
+        const index: number | undefined = queue[player.match.queueName]?.players.findIndex(pl => { pl.id == player.id })
+        if (index && index != -1) {
+            player.match.players.splice(index, 1)
+            const numPlayers = player.match.players.filter(pl => pl).length
+            if (numPlayers) {
+                player.match.players.forEach(pl => {
+                    if (pl.socket && pl.match) {
+                        pl.socket.send(JSON.stringify({
+                            type: 'opponent_left',
+                            game_ended: numPlayers < 2,
+                            players: getSendablePlayerArray(pl.match.players)
+                        }))
+                    }
+                })
+                if (numPlayers < 2) {
+                    queue[player.match.queueName] = undefined;
+                }
+            }
+            else {
+                console.log("NUMPLAYERS IS UNDEFINED!!!!!!")
+            }
         }
-        if (player.opponent && player.opponent.socket) {
-            player.opponent.socket.send(JSON.stringify({ type: 'opponent_left' }));
-            player.opponent.opponent = undefined;
-            player.opponent = undefined;
-        }
+    }
+}
+
+function getSendablePlayerArray(players: Player[] | undefined) {
+    if (players) {
+        return players.map(pl => { pl.username, pl.id, pl.team, pl.teamId })
+    }
+    else {
+        return []
     }
 }
 
