@@ -94,8 +94,8 @@ wss.on('connection', (ws: WebSocket) => {
                     ws.send(JSON.stringify({ type: 'error', value: "Invalid game mode, please update the mod!" }))
                     break;
                 }
-                if (data.modVersion != "1.2.0.0") {
-                    ws.send(JSON.stringify({ type: 'error', value: "Invalid mod version, please update the mod! Use 1.2.0" }))
+                if (data.modVersion != "1.2.1.0") {
+                    ws.send(JSON.stringify({ type: 'error', value: "Invalid mod version, please update the mod! Use 1.2.1" }))
                     break;
                 }
                 if (player && player.socket && player.opponent) {
